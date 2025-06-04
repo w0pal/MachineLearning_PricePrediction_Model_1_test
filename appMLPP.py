@@ -11,7 +11,9 @@ import joblib
 
 # === Load historical data ===
 def load_data(ticker, period='2y'):
-    df = yf.download(ticker, period=period, interval='1d')
+    df = yf.download(ticker, period=period, interval='1d', group_by='column', auto_adjust=False)
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)
     df.dropna(inplace=True)
     return df
 
