@@ -85,6 +85,13 @@ if ticker:
         df = add_all_features(df)
         df.dropna(inplace=True)
         model, scaler, selector, features = load_artifacts()
+        missing = [col for col in features if col not in df.columns]
+        if missing:
+            st.error(f"❌ Kolom berikut tidak ditemukan dalam DataFrame: {missing}")
+            st.write("Kolom tersedia:", list(df.columns))
+            st.write("Fitur yang diminta:", features)
+            st.stop()
+
         X = df[features]
         X_scaled = scaler.transform(X)
         X_selected = selector.transform(X_scaled)
