@@ -114,10 +114,10 @@ if ticker:
         model, scaler, selector = load_model_and_scaler()
         pred_price, pred_return = predict_price(df, model, scaler, selector)
 
-    last_close = df['Close'].iloc[-1]
+    last_close = float(df['Close'].iloc[-1])
+    pred_price = float(pred_price)
     delta = pred_price - last_close
     arah = "⬆️ Naik" if delta > 0 else "⬇️ Turun"
-    st.metric("Prediksi Harga Besok", f"${pred_price:.2f}", delta=f"{delta:.2f} ({arah})")
 
     # Plot harga
     fig = go.Figure()
