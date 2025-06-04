@@ -119,24 +119,23 @@ if ticker:
     delta = pred_price - last_close
     arah = "⬆️ Naik" if delta > 0 else "⬇️ Turun"
 
-       # Plot harga + prediksi
-    fig = go.Figure()
+  # === Visualisasi Harga dan Prediksi ===
+fig = go.Figure()
 
-    if not df['Close'].isna().all() and not np.isnan(pred_price):
-        fig.add_trace(go.Scatter(x=df.index, y=df['Close'], name='Close'))
-        fig.add_trace(go.Scatter(
-            x=[df.index[-1] + timedelta(days=1)],
-            y=[pred_price],
-            name='Prediksi',
-            mode='markers+text',
-            text=[f"${pred_price:.2f}"],
-            textposition="top center",
-            marker=dict(color='red', size=10)
-        ))
-    else:
-        st.warning(\"⚠️ Data tidak valid untuk divisualisasikan.\")
+if not df['Close'].isna().all() and not np.isnan(pred_price):
+    fig.add_trace(go.Scatter(x=df.index, y=df['Close'], name='Close'))
+    fig.add_trace(go.Scatter(
+        x=[df.index[-1] + timedelta(days=1)],
+        y=[pred_price],
+        name='Prediksi',
+        mode='markers+text',
+        text=[f"${pred_price:.2f}"],
+        textposition="top center",
+        marker=dict(color='red', size=10)
+    ))
+else:
+    st.warning("⚠️ Data tidak valid untuk divisualisasikan.")
 
-    fig.update_layout(title=f\"{ticker} - Harga Penutupan & Prediksi Besok\", xaxis_title=\"Tanggal\", yaxis_title=\"Harga\")
-
-    st.plotly_chart(fig, use_container_width=True)
+fig.update_layout(title=f"{ticker} - Harga Penutupan & Prediksi Besok", xaxis_title="Tanggal", yaxis_title="Harga")
+st.plotly_chart(fig, use_container_width=True)
 
