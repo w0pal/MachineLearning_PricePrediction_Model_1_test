@@ -84,14 +84,19 @@ def load_model_and_scaler():
 
 # === Predict price ===
 def predict_price(df, model, scaler, selector):
-    features = selector.get_support()
     df = df.dropna()
-    X = df.iloc[-1:]
-    X_scaled = scaler.transform(X)
+    
+    # Ambil baris terakhir sebagai input prediksi
+    X_raw = df.drop(['Target', 'Close'], axis=1).iloc[-1:]
+    
+    # Pastikan kolom sama urutan dan jumlahnya seperti saat training
+    X_scaled = scaler.transform(X_raw)
     X_selected = selector.transform(X_scaled)
+    
     y_pred_return = model.predict(X_selected)[0]
     y_pred_price = df['Close'].iloc[-1] * (1 + y_pred_return)
     return y_pred_price, y_pred_return
+
 
 # === Streamlit App ===
 st.set_page_config(page_title="Prediksi Harga Aset", layout="wide")
