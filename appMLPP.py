@@ -11,11 +11,16 @@ import joblib
 
 # === Load historical data ===
 def load_data(ticker, period='2y'):
-    df = yf.download(ticker, period=period, interval='1d', group_by='column', auto_adjust=False)
-    if isinstance(df.columns, pd.MultiIndex):
-        df.columns = df.columns.get_level_values(0)
-    df.dropna(inplace=True)
-    return df
+    try:
+        df = yf.download(ticker, period=period, interval='1d', group_by='column', auto_adjust=False)
+        if df is None or df.empty:
+            raise ValueError(f"Data untuk ticker '{ticker}' tidak ditemukan di Yahoo Finance.")
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = df.columns.get_level_values(0)
+        df.dropna(inplace=True)
+        return df
+    except Exception as e:
+        raise ValueError(f"Gagal mengambil data untuk ticker '{ticker}': {e}")
 
 # === Tambahkan indikator teknikal dan fitur ===
 def add_all_features(df):
@@ -81,24 +86,31 @@ with st.sidebar:
 
 if ticker:
     with st.spinner("Mengambil dan memproses data..."):
-        df = load_data(ticker)
-        df = add_all_features(df)
-        df.dropna(inplace=True)
-        model, scaler, selector, features = load_artifacts()
-        missing = [col for col in features if col not in df.columns]
-        if missing:
-            st.error(f"❌ Kolom berikut tidak ditemukan dalam DataFrame: {missing}")
-            st.write("Kolom tersedia:", list(df.columns))
-            st.write("Fitur yang diminta:", features)
-            st.stop()
+        try:
+            df = load_data(ticker)
+            df = add_all_features(df)
+            df.dropna(inplace=True)
+            model, scaler, selector, features = load_artifacts()
+            missing = [col for col in features if col not in df.columns]
+            if missing:
+                st.error(f"❌ Kolom berikut tidak ditemukan dalam DataFrame: {missing}")
+                st.write("Kolom tersedia:", list(df.columns))
+                st.write("Fitur yang diminta:", features)
+                st.stop()
 
-        X = df[features]
-        X_scaled = scaler.transform(X)
-        X_selected = selector.transform(X_scaled)
-        y_pred_return = model.predict(X_selected[-1:])[0]
-        last_close = df['Close'].iloc[-1]
-        pred_price = float(last_close * (1 + y_pred_return))
-        arah = "⬆️ Naik" if y_pred_return > 0 else "⬇️ Turun"
+            X = df[features]
+            X_scaled = scaler.transform(X)
+            X_selected = selector.transform(X_scaled)
+            y_pred_return = model.predict(X_selected[-1:])[0]
+            last_close = df['Close'].iloc[-1]
+            pred_price = float(last_close * (1 + y_pred_return))
+            arah = "⬆️ Naik" if y_pred_return > 0 else "⬇️ Turun"
+        except ValueError as e:
+            st.error(f"❌ {e}")
+            st.stop()
+        except Exception as e:
+            st.error(f"❌ Terjadi error tak terduga: {e}")
+            st.stop()
 
     st.metric("Prediksi Harga Besok", f"${pred_price:.2f}", delta=f"{pred_price - last_close:.2f} ({arah})")
 
